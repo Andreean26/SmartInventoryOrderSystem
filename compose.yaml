@@ -1,0 +1,35 @@
+services:
+  server:
+    build:
+      context: .
+    ports:
+      - 8181:8181
+    environment:
+      - SPRING_PROFILES_ACTIVE=prod
+      - DB_PROD=jdbc:mysql://db:3306/smart_inventory_prod?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Jakarta
+      - DB_USERNAME=root
+      - DB_PASSWORD=secretpassword
+    depends_on:
+      db:
+        condition: service_healthy
+
+  db:
+    image: mysql:8.0
+    restart: always
+    environment:
+      - MYSQL_ROOT_PASSWORD=secretpassword
+      - MYSQL_DATABASE=smart_inventory_prod
+    ports:
+      - 3307:3306
+    volumes:
+      - db-data:/var/lib/mysql
+      - ./db/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-psecretpassword"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+volumes:
+  db-data:
