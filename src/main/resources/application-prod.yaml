@@ -1,3 +1,6 @@
+server:
+  port: 8181
+
 spring:
   datasource:
     url: ${DB_PROD}
@@ -12,8 +15,14 @@ spring:
       max-lifetime: 1200000
   jpa:
     hibernate:
-      ddl-auto: update
+      ddl-auto: validate
     show-sql: false
+
+springdoc:
+  api-docs:
+    enabled: false
+  swagger-ui:
+    enabled: false
 
 logging:
   level:

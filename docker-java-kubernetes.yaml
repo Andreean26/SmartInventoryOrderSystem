@@ -1,0 +1,48 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: smart-inventory-app
+  labels:
+    app: smart-inventory
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: smart-inventory
+  template:
+    metadata:
+      labels:
+        app: smart-inventory
+    spec:
+      containers:
+        - name: smart-inventory-app
+          # For local: use smartinventoryorders:latest
+          # For CI/CD: use ghcr.io/<owner>/<repo>:prod or ghcr.io/<owner>/<repo>:dev
+          image: smartinventoryorders:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8181
+          env:
+            - name: SPRING_PROFILES_ACTIVE
+              value: "prod"
+            - name: DB_PROD
+              value: "jdbc:mysql://mysql-service:3306/smart_inventory_prod?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Jakarta"
+            - name: DB_DEV
+              value: "jdbc:mysql://mysql-service:3306/smart_inventory_dev?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Jakarta"
+            - name: DB_USERNAME
+              value: "root"
+            - name: DB_PASSWORD
+              value: "secretpassword"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: smart-inventory-service
+spec:
+  type: ClusterIP
+  selector:
+    app: smart-inventory
+  ports:
+    - protocol: TCP
+      port: 8181
+      targetPort: 8181
