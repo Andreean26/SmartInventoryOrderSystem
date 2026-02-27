@@ -1,0 +1,68 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: mysql-pv-claim
+  labels:
+    app: mysql
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi # Atur ukuran sesuai kebutuhan
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: mysql-service # Nama service ini penting karena dipanggil oleh backend di DB_PROD
+  labels:
+    app: mysql
+spec:
+  ports:
+    - port: 3306
+  selector:
+    app: mysql
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mysql
+  labels:
+    app: mysql
+spec:
+  selector:
+    matchLabels:
+      app: mysql
+  strategy:
+    type: Recreate # Rekomendasi untuk db supaya datanya nggak crash kalau ada 2 pod nyala bersamaan
+  template:
+    metadata:
+      labels:
+        app: mysql
+    spec:
+      containers:
+      - image: mysql:8.0
+        name: mysql
+        env:
+        # Sama dengan konfigurasi Docker Compose
+        - name: MYSQL_ROOT_PASSWORD
+          value: "secretpassword"
+        - name: MYSQL_DATABASE
+          value: "smart_inventory_prod"
+        ports:
+        - containerPort: 3306
+          name: mysql
+        volumeMounts:
+        # Volume 1: Untuk simpan data database (Persistency)
+        - name: mysql-persistent-storage
+          mountPath: /var/lib/mysql
+        # Volume 2: Untuk init.sql script
+        - name: mysql-initdb
+          mountPath: /docker-entrypoint-initdb.d
+      volumes:
+      - name: mysql-persistent-storage
+        persistentVolumeClaim:
+          claimName: mysql-pv-claim
+      - name: mysql-initdb
+        configMap:
+          name: mysql-initdb-config
