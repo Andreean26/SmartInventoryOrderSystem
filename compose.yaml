@@ -2,7 +2,7 @@ services:
   server:
     build:
       context: .
-    image: smartinventoryorders-dev:latest
+    image: ${DOCKER_IMAGE:-smartinventoryorders:latest}
     restart: always
     ports:
       - 8181:8181
