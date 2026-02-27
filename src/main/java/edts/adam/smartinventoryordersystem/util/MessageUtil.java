@@ -19,7 +19,7 @@ import org.springframework.stereotype.Component;
  * // Simple key lookup
  * messageUtil.get("product.created.success");
  *
- * // Key with arguments
+ * // Key with arguments you
  * messageUtil.get("product.not.found", productId);
  * </pre>
  */
