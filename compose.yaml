@@ -2,12 +2,12 @@ services:
   server:
     build:
       context: .
-    image: smartinventoryorders:latest
+    image: smartinventoryorders-dev:latest
     restart: always
     ports:
       - 8181:8181
     environment:
-      - SPRING_PROFILES_ACTIVE=${SPRING_PROFILES_ACTIVE:-prod}
+      - SPRING_PROFILES_ACTIVE=${SPRING_PROFILES_ACTIVE:-dev}
       - DB_PROD=jdbc:mysql://db:3306/smart_inventory_prod?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Jakarta
       - DB_DEV=jdbc:mysql://db:3306/smart_inventory_dev?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Jakarta
       - DB_USERNAME=root
@@ -21,7 +21,7 @@ services:
     restart: always
     environment:
       - MYSQL_ROOT_PASSWORD=secretpassword
-      - MYSQL_DATABASE=smart_inventory_prod
+      - MYSQL_DATABASE=smart_inventory_dev
     ports:
       - 3307:3306
     volumes:
