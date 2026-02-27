@@ -18,7 +18,7 @@ spec:
         - name: smart-inventory-app
           # For local: use smartinventoryorders:latest
           # For CI/CD: use ghcr.io/<owner>/<repo>:prod or ghcr.io/<owner>/<repo>:dev
-          image: smartinventoryorders:latest
+          image: smartinventoryorders-prod:latest
           imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 8181

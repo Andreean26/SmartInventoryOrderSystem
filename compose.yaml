@@ -2,7 +2,7 @@ services:
   server:
     build:
       context: .
-    image: smartinventoryorders:latest
+    image: smartinventoryorders-prod:latest
     restart: always
     ports:
       - 8181:8181
