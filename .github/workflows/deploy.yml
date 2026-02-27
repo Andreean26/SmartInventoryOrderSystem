@@ -6,10 +6,8 @@ on:
       - main
       - develop
 
-# Best Practice: Cancel in-progress runs when a new push arrives on the same branch
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
+env:
+  REGISTRY: ghcr.io
 
 jobs:
   # ============================================================
@@ -32,11 +30,14 @@ jobs:
         run: ./mvnw test
 
   # ============================================================
-  # Job 2: Build & Push — Build Docker image and push to Docker Hub
+  # Job 2: Build & Push — Build Docker image and push to GHCR
   # ============================================================
   build-and-push:
     runs-on: ubuntu-latest
     needs: test
+    permissions:
+      contents: read
+      packages: write
     outputs:
       image-tag: ${{ steps.meta.outputs.tags }}
       spring-profile: ${{ steps.profile.outputs.SPRING_PROFILE }}
@@ -45,6 +46,7 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v4
 
+      # Determine Spring profile based on branch
       # develop → dev profile | main → prod profile
       - name: Determine Spring Profile
         id: profile
@@ -59,7 +61,7 @@ jobs:
         id: meta
         uses: docker/metadata-action@v5
         with:
-          images: ${{ secrets.DOCKERHUB_USERNAME }}/smartinventoryorders
+          images: ${{ env.REGISTRY }}/${{ github.repository }}
           tags: |
             type=raw,value=${{ steps.profile.outputs.SPRING_PROFILE }}
             type=sha,prefix=${{ steps.profile.outputs.SPRING_PROFILE }}-
@@ -67,11 +69,12 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-      - name: Login to Docker Hub
+      - name: Login to Container Registry
         uses: docker/login-action@v3
         with:
-          username: ${{ secrets.DOCKERHUB_USERNAME }}
-          password: ${{ secrets.DOCKERHUB_TOKEN }}
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Build and Push Docker Image
         uses: docker/build-push-action@v6
@@ -93,21 +96,18 @@ jobs:
 
     steps:
       - name: Deploy to Server
-        env:
-          SPRING_PROFILE: ${{ needs.build-and-push.outputs.spring-profile }}
-          IMAGE_TAG: ${{ needs.build-and-push.outputs.image-tag }}
         run: |
           echo "============================================"
-          echo " Profile: $SPRING_PROFILE"
-          echo " Image:   $IMAGE_TAG"
+          echo "Profile: ${{ needs.build-and-push.outputs.spring-profile }}"
+          echo "Image:   ${{ needs.build-and-push.outputs.image-tag }}"
           echo "============================================"
 
           # Deploy with Docker Compose (VPS/VM):
           # ssh user@server "
           #   cd /path/to/app &&
-          #   export SPRING_PROFILES_ACTIVE=$SPRING_PROFILE &&
+          #   export SPRING_PROFILES_ACTIVE=${{ needs.build-and-push.outputs.spring-profile }} &&
           #   docker compose pull &&
           #   docker compose up -d --force-recreate
           # "
 
-          echo "Deployed successfully with $SPRING_PROFILE profile!"
+          echo "Deploy completed for ${{ needs.build-and-push.outputs.spring-profile }}!"
